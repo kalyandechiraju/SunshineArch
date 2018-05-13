@@ -20,10 +20,10 @@ import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import com.example.android.sunshine.AppExecutors;
 import com.example.android.sunshine.R;
 import com.example.android.sunshine.data.database.WeatherEntry;
 import com.example.android.sunshine.databinding.ActivityDetailBinding;
+import com.example.android.sunshine.utilities.InjectorUtils;
 import com.example.android.sunshine.utilities.SunshineDateUtils;
 import com.example.android.sunshine.utilities.SunshineWeatherUtils;
 
@@ -55,28 +55,12 @@ public class DetailActivity extends AppCompatActivity {
         long timestamp = getIntent().getLongExtra(WEATHER_ID_EXTRA, -1);
         Date date = new Date(timestamp);
 
-        viewModel = ViewModelProviders.of(this).get(DetailActivityViewModel.class);
+        Date today = SunshineDateUtils.getNormalizedUtcDateForToday();
+        DetailViewModelFactory viewModelFactory = InjectorUtils.provideDetailViewModelFactory(this, today);
+        viewModel = ViewModelProviders.of(this, viewModelFactory).get(DetailActivityViewModel.class);
         viewModel.getWeather().observe(this, weatherEntry -> {
             if (weatherEntry != null) {
                 bindWeatherToUI(weatherEntry);
-            }
-        });
-
-        AppExecutors.getInstance().diskIO().execute(()-> {
-            try {
-
-                // Pretend this is the network loading data
-                Thread.sleep(4000);
-                Date today = SunshineDateUtils.getNormalizedUtcDateForToday();
-                WeatherEntry pretendWeatherFromDatabase = new WeatherEntry(1, 210, today,88.0,99.0,71,1030, 74, 5);
-                viewModel.setWeather(pretendWeatherFromDatabase);
-
-                Thread.sleep(2000);
-                pretendWeatherFromDatabase = new WeatherEntry(1, 952, today,50.0,60.0,46,1044, 70, 100);
-                viewModel.setWeather(pretendWeatherFromDatabase);
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         });
 
